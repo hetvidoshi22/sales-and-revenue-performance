@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Google Charts</title>
+
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+body{
+    font-family: Arial;
+    margin:20px;
+}
+
+.chart-container{
+    margin-bottom:50px;
+}
+</style>
+
+<script>
+
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(loadData);
+
+function loadData(){
+
+Papa.parse("data/sales_revenue_performance.csv",{
+
+download:true,
+header:true,
+skipEmptyLines:true,
+
+complete:function(results){
+
+processData(results.data);
+
+}
+
+});
+
+}
+
+function processData(data){
+
+let revenueProduct={};
+let revenueCity={};
+let revenueDate={};
+let revenuePayment={};
+let quantityProduct={};
+let revenueCustomer={};
+
+data.forEach(row=>{
+
+// CLEANING STEP
+if(
+!row ||
+!row["Product line"] ||
+!row["City"] ||
+!row["Payment"] ||
+!row["Customer type"] ||
+!row["Sales"] ||
+row["Product line"].trim()=="" ||
+row["City"].trim()=="" ||
+row["Payment"].trim()=="" ||
+row["Customer type"].trim()==""
+){
+return;
+}
+
+let sales=parseFloat(row["Sales"]);
+let quantity=parseFloat(row["Quantity"]);
+
+let product=row["Product line"].trim();
+let city=row["City"].trim();
+let date=row["Date"].trim();
+let payment=row["Payment"].trim();
+let customer=row["Customer type"].trim();
+
+revenueProduct[product]=(revenueProduct[product]||0)+sales;
+revenueCity[city]=(revenueCity[city]||0)+sales;
+revenueDate[date]=(revenueDate[date]||0)+sales;
+revenuePayment[payment]=(revenuePayment[payment]||0)+sales;
+quantityProduct[product]=(quantityProduct[product]||0)+quantity;
+revenueCustomer[customer]=(revenueCustomer[customer]||0)+sales;
+
+});
+
+// DRAW ALL CHARTS
+
+drawChart(revenueProduct,"chart1","Revenue by Product Line","BarChart");
+drawChart(revenueCity,"chart2","Revenue by City","PieChart");
+drawChart(revenueDate,"chart3","Revenue Over Time","LineChart");
+drawChart(revenuePayment,"chart4","Revenue by Payment Method","ColumnChart");
+drawChart(quantityProduct,"chart5","Quantity Sold by Product Line","ColumnChart");
+drawChart(revenueCustomer,"chart6","Revenue by Customer Type","PieChart");
+
+}
+
+function drawChart(obj,div,title,type){
+
+let arr=[["Category","Value"]];
+
+for(let key in obj){
+
+if(key!="undefined" && key!="null" && key!=""){
+arr.push([key,obj[key]]);
+}
+
+}
+
+let data=google.visualization.arrayToDataTable(arr);
+
+let options={
+
+title:title,
+height:400,
+legend:{position:'right'},
+chartArea:{width:'65%',height:'70%'}
+
+};
+
+let chart;
+
+switch(type){
+
+case "BarChart":
+chart=new google.visualization.BarChart(document.getElementById(div));
+break;
+
+case "PieChart":
+chart=new google.visualization.PieChart(document.getElementById(div));
+break;
+
+case "LineChart":
+chart=new google.visualization.LineChart(document.getElementById(div));
+break;
+
+case "ColumnChart":
+chart=new google.visualization.ColumnChart(document.getElementById(div));
+break;
+
+}
+
+chart.draw(data,options);
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<h1>Sales and Revenue Performance Dashboard</h1>
+
+<div class="chart-container">
+<div id="chart1"></div>
+</div>
+
+<div class="chart-container">
+<div id="chart2"></div>
+</div>
+
+<div class="chart-container">
+<div id="chart3"></div>
+</div>
+
+<div class="chart-container">
+<div id="chart4"></div>
+</div>
+
+<div class="chart-container">
+<div id="chart5"></div>
+</div>
+
+<div class="chart-container">
+<div id="chart6"></div>
+</div>
+
+</body>
+</html>

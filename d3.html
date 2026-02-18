@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>D3.js</title>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+margin:20px;
+}
+
+svg{
+margin-bottom:50px;
+border:1px solid #ddd;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Sales and Revenue Dashboard (D3.js)</h1>
+
+<div id="charts"></div>
+
+<script>
+
+Papa.parse("data/sales_revenue_performance.csv",{
+
+download:true,
+header:true,
+skipEmptyLines:true,
+
+complete:function(results){
+
+let data=results.data.filter(row =>
+row &&
+row["Product line"] &&
+row["City"] &&
+row["Sales"]
+);
+
+createBar(data,"Product line","Sales","Revenue by Product Line");
+createBar(data,"City","Sales","Revenue by City");
+createBar(data,"Payment","Sales","Revenue by Payment Method");
+createBar(data,"Product line","gross income","Profit by Product Line");
+createScatter(data,"Quantity","gross income","Profit vs Quantity");
+createScatter(data,"Sales","Rating","Sales vs Rating");
+
+}
+
+});
+
+function createSVG(){
+
+return d3.select("#charts")
+.append("svg")
+.attr("width",700)
+.attr("height",400);
+
+}
+
+function createBar(data,groupField,valueField,title){
+
+let svg=createSVG();
+
+let margin=50,width=600,height=300;
+
+let g=svg.append("g")
+.attr("transform","translate(50,50)");
+
+let agg=d3.rollup(
+data,
+v=>d3.sum(v,d=>+d[valueField]),
+d=>d[groupField]
+);
+
+let arr=Array.from(agg);
+
+let x=d3.scaleBand()
+.domain(arr.map(d=>d[0]))
+.range([0,width])
+.padding(0.3);
+
+let y=d3.scaleLinear()
+.domain([0,d3.max(arr,d=>d[1])])
+.range([height,0]);
+
+g.append("g")
+.attr("transform","translate(0,"+height+")")
+.call(d3.axisBottom(x));
+
+g.append("g")
+.call(d3.axisLeft(y));
+
+g.selectAll("rect")
+.data(arr)
+.enter()
+.append("rect")
+.attr("x",d=>x(d[0]))
+.attr("y",d=>y(d[1]))
+.attr("width",x.bandwidth())
+.attr("height",d=>height-y(d[1]))
+.attr("fill","#4CAF50");
+
+svg.append("text")
+.attr("x",350)
+.attr("y",20)
+.attr("text-anchor","middle")
+.style("font-size","16px")
+.text(title);
+
+}
+
+function createScatter(data,xField,yField,title){
+
+let svg=createSVG();
+
+let margin=50,width=600,height=300;
+
+let g=svg.append("g")
+.attr("transform","translate(50,50)");
+
+let x=d3.scaleLinear()
+.domain([0,d3.max(data,d=>+d[xField])])
+.range([0,width]);
+
+let y=d3.scaleLinear()
+.domain([0,d3.max(data,d=>+d[yField])])
+.range([height,0]);
+
+g.append("g")
+.attr("transform","translate(0,"+height+")")
+.call(d3.axisBottom(x));
+
+g.append("g")
+.call(d3.axisLeft(y));
+
+g.selectAll("circle")
+.data(data)
+.enter()
+.append("circle")
+.attr("cx",d=>x(+d[xField]))
+.attr("cy",d=>y(+d[yField]))
+.attr("r",4)
+.style("fill","#2196F3");
+
+svg.append("text")
+.attr("x",350)
+.attr("y",20)
+.attr("text-anchor","middle")
+.style("font-size","16px")
+.text(title);
+
+}
+
+</script>
+
+</body>
+</html>

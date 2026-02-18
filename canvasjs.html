@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>CanvasJS</title>
+
+<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+margin:20px;
+}
+.chart{
+height:350px;
+margin-bottom:50px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Sales and Revenue Dashboard (CanvasJS)</h1>
+
+<div id="chart1" class="chart"></div>
+<div id="chart2" class="chart"></div>
+<div id="chart3" class="chart"></div>
+<div id="chart4" class="chart"></div>
+<div id="chart5" class="chart"></div>
+<div id="chart6" class="chart"></div>
+
+<script>
+
+Papa.parse("data/sales_revenue_performance.csv",{
+
+download:true,
+header:true,
+skipEmptyLines:true,
+
+complete:function(results){
+
+let cleanData = results.data.filter(row =>
+row &&
+row["Product line"] &&
+row["City"] &&
+row["Payment"] &&
+row["Customer type"] &&
+row["Sales"]
+);
+
+createChart("chart1","Revenue by Product Line",
+aggregate(cleanData,"Product line","Sales"));
+
+createChart("chart2","Revenue by City",
+aggregate(cleanData,"City","Sales"));
+
+createChart("chart3","Revenue by Payment Method",
+aggregate(cleanData,"Payment","Sales"));
+
+createChart("chart4","Quantity by Product Line",
+aggregate(cleanData,"Product line","Quantity"));
+
+createChart("chart5","Profit by Product Line",
+aggregate(cleanData,"Product line","gross income"));
+
+createChart("chart6","Revenue by Customer Type",
+aggregate(cleanData,"Customer type","Sales"));
+
+}
+
+});
+
+function aggregate(data,groupField,valueField){
+
+let obj={};
+
+data.forEach(row=>{
+
+let key=row[groupField].trim();
+let value=parseFloat(row[valueField]);
+
+if(!key || isNaN(value)) return;
+
+obj[key]=(obj[key]||0)+value;
+
+});
+
+let result=[];
+
+for(let key in obj){
+
+result.push({
+label:key,
+y:obj[key]
+});
+
+}
+
+return result;
+
+}
+
+function createChart(container,title,dataPoints){
+
+let chart=new CanvasJS.Chart(container,{
+
+animationEnabled:true,
+
+theme:"light2",
+
+title:{
+text:title
+},
+
+axisY:{
+title:"Value"
+},
+
+data:[{
+type:"column",
+toolTipContent:"{label}: {y}",
+dataPoints:dataPoints
+}]
+
+});
+
+chart.render();
+
+}
+
+</script>
+
+</body>
+</html>
